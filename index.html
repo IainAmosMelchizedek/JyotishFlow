@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JyotishFlow — CK Iain Melchizedek</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+  <!-- OCEAN PARTICLE CANVAS -->
+  <canvas id="ocean"></canvas>
+
+  <!-- LOADING SCREEN -->
+  <div id="loader">
+    <div class="loader-symbol">⚓</div>
+    <div class="loader-text">READING THE COSMIC TIDES...</div>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div id="dashboard" class="hidden">
+
+    <!-- HEADER -->
+    <header>
+      <div class="header-left">
+        <div class="trident">🔱</div>
+        <div class="title-block">
+          <h1 class="site-title">JYOTISH<span>FLOW</span></h1>
+          <p class="site-sub">CK IAIN MELCHIZEDEK · RAHU MAHADASHA</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="live-clock" id="liveClock"></div>
+        <div class="location-tag">⚓ BOSTON, MA</div>
+      </div>
+    </header>
+
+    <!-- OVERALL DAY STATUS BANNER -->
+    <section class="day-banner" id="dayBanner">
+      <div class="banner-inner">
+        <span class="banner-icon" id="bannerIcon">🌊</span>
+        <div class="banner-text">
+          <h2 id="bannerTitle">READING THE TIDES...</h2>
+          <p id="bannerSub">Calculating your cosmic alignment</p>
+        </div>
+        <div class="banner-score" id="bannerScore">--</div>
+      </div>
+    </section>
+
+    <!-- CURRENT MOMENT STATUS -->
+    <section class="section-title">⚡ RIGHT NOW</section>
+    <div class="cards-grid" id="nowCards">
+
+      <div class="card" id="cardKarana">
+        <div class="card-label">KARANA</div>
+        <div class="card-value" id="karanaValue">--</div>
+        <div class="card-time" id="karanaTime"></div>
+        <div class="card-status" id="karanaStatus"></div>
+      </div>
+
+      <div class="card" id="cardYoga">
+        <div class="card-label">YOGA</div>
+        <div class="card-value" id="yogaValue">--</div>
+        <div class="card-time" id="yogaTime"></div>
+        <div class="card-status" id="yogaStatus"></div>
+      </div>
+
+      <div class="card" id="cardTithi">
+        <div class="card-label">TITHI</div>
+        <div class="card-value" id="tithiValue">--</div>
+        <div class="card-time" id="tithiTime"></div>
+        <div class="card-status" id="tithiStatus"></div>
+      </div>
+
+      <div class="card" id="cardNakshatra">
+        <div class="card-label">NAKSHATRA</div>
+        <div class="card-value" id="nakshatraValue">--</div>
+        <div class="card-time" id="nakshatraTime"></div>
+        <div class="card-status" id="nakshatraStatus"></div>
+      </div>
+
+    </div>
+
+    <!-- TIME WINDOWS -->
+    <section class="section-title">🕐 TODAY'S TIME WINDOWS</section>
+    <div class="timeline" id="timeline">
+
+      <div class="tl-item good" id="tlAbhijit">
+        <div class="tl-dot"></div>
+        <div class="tl-label">⭐ ABHIJIT MUHURTA</div>
+        <div class="tl-time" id="abhijitTime">--</div>
+        <div class="tl-desc">Most auspicious window of the day</div>
+      </div>
+
+      <div class="tl-item good" id="tlAmrit">
+        <div class="tl-dot"></div>
+        <div class="tl-label">✨ AMRIT KALAM</div>
+        <div class="tl-time" id="amritTime">--</div>
+        <div class="tl-desc">Nectar time — excellent for new actions</div>
+      </div>
+
+      <div class="tl-item bad" id="tlRahu">
+        <div class="tl-dot"></div>
+        <div class="tl-label">☠️ RAHU KALAM</div>
+        <div class="tl-time" id="rahuTime">--</div>
+        <div class="tl-desc">Avoid new beginnings during this window</div>
+      </div>
+
+      <div class="tl-item bad" id="tlGulika">
+        <div class="tl-dot"></div>
+        <div class="tl-label">⚠️ GULIKA KALAM</div>
+        <div class="tl-time" id="gulikaTime">--</div>
+        <div class="tl-desc">Inauspicious — proceed with caution</div>
+      </div>
+
+      <div class="tl-item bad" id="tlYama">
+        <div class="tl-dot"></div>
+        <div class="tl-label">💀 YAMAGANDA</div>
+        <div class="tl-time" id="yamaTime">--</div>
+        <div class="tl-desc">Avoid important decisions</div>
+      </div>
+
+      <div class="tl-item bad" id="tlDur">
+        <div class="tl-dot"></div>
+        <div class="tl-label">🚫 DUR MUHURTAM</div>
+        <div class="tl-time" id="durTime">--</div>
+        <div class="tl-desc">Inauspicious time period</div>
+      </div>
+
+      <div class="tl-item bad" id="tlVarjyam">
+        <div class="tl-dot"></div>
+        <div class="tl-label">🌑 VARJYAM</div>
+        <div class="tl-time" id="varjyamTime">--</div>
+        <div class="tl-desc">Avoid starting anything new</div>
+      </div>
+
+    </div>
+
+    <!-- PERSONAL CHART ANCHORS -->
+    <section class="section-title">🧭 YOUR COSMIC ANCHORS</section>
+    <div class="anchors-grid">
+
+      <div class="anchor-card good">
+        <div class="anchor-label">LUCKY DAYS</div>
+        <div class="anchor-value">TUE · SUN</div>
+        <div class="anchor-note" id="luckyDayNote">--</div>
+      </div>
+
+      <div class="anchor-card good">
+        <div class="anchor-label">GOOD PLANETS</div>
+        <div class="anchor-value">MARS · MOON · SUN</div>
+      </div>
+
+      <div class="anchor-card good">
+        <div class="anchor-label">LUCKY NUMBERS</div>
+        <div class="anchor-value">1 · 3 · 7 · 9</div>
+      </div>
+
+      <div class="anchor-card bad">
+        <div class="anchor-label">AVOID TODAY</div>
+        <div class="anchor-value" id="avoidToday">FRIDAY · TAITILA · VAIDHRITI</div>
+      </div>
+
+      <div class="anchor-card neutral">
+        <div class="anchor-label">CURRENT DASHA</div>
+        <div class="anchor-value">RAHU MAHADASHA</div>
+        <div class="anchor-note">2025 — 2043</div>
+      </div>
+
+      <div class="anchor-card neutral">
+        <div class="anchor-label">LUCKY STONE</div>
+        <div class="anchor-value">YELLOW SAPPHIRE</div>
+        <div class="anchor-note">Metal: GOLD</div>
+      </div>
+
+    </div>
+
+    <!-- SUNRISE SUNSET -->
+    <section class="section-title">🌅 SUN & MOON</section>
+    <div class="sun-moon-bar">
+      <div class="sm-item">
+        <span class="sm-icon">🌅</span>
+        <span class="sm-label">SUNRISE</span>
+        <span class="sm-val" id="sunriseVal">--</span>
+      </div>
+      <div class="sm-divider"></div>
+      <div class="sm-item">
+        <span class="sm-icon">🌇</span>
+        <span class="sm-label">SUNSET</span>
+        <span class="sm-val" id="sunsetVal">--</span>
+      </div>
+      <div class="sm-divider"></div>
+      <div class="sm-item">
+        <span class="sm-icon">🌙</span>
+        <span class="sm-label">BAD PRAHAR</span>
+        <span class="sm-val">1ST PRAHAR</span>
+      </div>
+      <div class="sm-divider"></div>
+      <div class="sm-item">
+        <span class="sm-icon">⚓</span>
+        <span class="sm-label">WEEKDAY</span>
+        <span class="sm-val" id="weekdayVal">--</span>
+      </div>
+    </div>
+
+    <footer>
+      <p>🌊 MOTHER OCEAN TAUGHT ME TO BE LIKE HER — WITH NO SHAME, AS IS 🌊</p>
+      <p class="footer-sub">JyotishFlow · Vedic Timing · Boston MA · Rahu Mahadasha Active</p>
+    </footer>
+
+  </div>
+
+  <script src="js/panchang.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
