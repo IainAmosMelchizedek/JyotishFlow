@@ -3,7 +3,7 @@
    Single call. All data. Fast. Clean.
    ============================================ */
 
-const VEDIKA_SANDBOX = "https://corsproxy.io/?" + encodeURIComponent("https://api.vedika.io/sandbox/panchang/today");
+const VEDIKA_SANDBOX = "https://api.vedika.io/sandbox/panchang/today";
 const VEDIKA_LIVE    = "https://api.vedika.io/v2/astrology/panchang";
 
 // ── FORMAT TIME ─────────────────────────────────
@@ -31,7 +31,7 @@ async function loadPanchang(chart) {
   console.log("🌊 JyotishFlow: Loading via Vedika single call...");
 
   // Use sandbox for now — swap to VEDIKA_LIVE when subscribed
- const useSandbox = false;
+  const useSandbox = true;
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
 
