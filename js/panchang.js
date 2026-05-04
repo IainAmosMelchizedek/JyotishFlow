@@ -31,7 +31,7 @@ async function loadPanchang(chart) {
   console.log("🌊 JyotishFlow: Loading via Vedika single call...");
 
   // Use sandbox for now — swap to VEDIKA_LIVE when subscribed
-  const useSandbox = false;
+ const useSandbox = false;
   const url = useSandbox ? VEDIKA_SANDBOX : VEDIKA_LIVE;
 
   let raw;
