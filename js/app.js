@@ -35,7 +35,7 @@ const CHART = {
   dashaEnd:     "June 20, 2043",
 
   // API KEY — replace with your actual key
-  apiKey:       "trn153Ytis3DVR4eiuD7A1K61a2dKIBc3akeTqQU"
+  apiKey:       "apiKey: VEDIKA_API_KEY"
 };
 
 // ── KNOWN INAUSPICIOUS KARANAS ──────────────────
