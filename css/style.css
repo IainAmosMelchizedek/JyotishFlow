@@ -245,13 +245,14 @@ header {
 /* SECTION TITLES */
 .section-title {
   font-family: 'Cinzel Decorative', serif;
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   letter-spacing: 0.3em;
-  color: var(--gold-dim);
+  color: var(--gold);
   text-transform: uppercase;
   margin: 2rem 0 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
+  text-shadow: var(--glow-gold);
 }
 
 /* CARDS GRID */
@@ -292,23 +293,27 @@ header {
 .card:hover::after { transform: scaleX(1); }
 
 .card-label {
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   letter-spacing: 0.3em;
-  color: var(--text-dim);
-  margin-bottom: 0.5rem;
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .card-value {
   font-family: 'Cinzel Decorative', serif;
-  font-size: 1.3rem;
-  color: var(--gold);
+  font-size: 1.4rem;
+  color: var(--electric);
   margin-bottom: 0.3rem;
+  text-shadow: var(--glow-blue);
 }
 
 .card-time {
-  font-size: 0.75rem;
-  color: var(--neutral);
+  font-size: 0.8rem;
+  color: var(--text);
   margin-bottom: 0.5rem;
+  font-weight: 400;
 }
 
 .card-status {
@@ -318,6 +323,79 @@ header {
   padding: 0.2rem 0.6rem;
   border-radius: 2px;
   display: inline-block;
+}
+
+/* CARD FLIP ON HOVER */
+.card {
+  position: relative;
+  min-height: 160px;
+  perspective: 1000px;
+}
+
+.card-front {
+  position: absolute;
+  inset: 0;
+  padding: 1.5rem;
+  backface-visibility: hidden;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  opacity: 1;
+  transform: rotateY(0deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.card-back {
+  position: absolute;
+  inset: 0;
+  padding: 1.5rem;
+  backface-visibility: hidden;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  opacity: 0;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--navy);
+  border-radius: 4px;
+}
+
+.card:hover .card-front {
+  opacity: 0;
+  transform: rotateY(-180deg);
+}
+
+.card:hover .card-back {
+  opacity: 1;
+  transform: rotateY(0deg);
+}
+
+.card-back-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.8rem;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.8rem;
+}
+
+.card-back-body {
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.card-back-warning {
+  margin-top: 0.8rem;
+  font-size: 0.75rem;
+  color: var(--red-bad);
+  font-weight: 600;
+}
+
+.card-back-good {
+  margin-top: 0.8rem;
+  font-size: 0.75rem;
+  color: var(--green-good);
+  font-weight: 600;
 }
 
 .status-good {
