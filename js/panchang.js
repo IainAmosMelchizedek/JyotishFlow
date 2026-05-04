@@ -114,21 +114,21 @@ async function loadPanchang(chart) {
     .find(t => t.name?.toLowerCase().includes('amrit'));
   const amritTime = amritEntry
     ? fmtRange(amritEntry.start, amritEntry.end)
-    : '--';
+    : 'Available with live API';
 
   // Dur Muhurtam — from inauspicious_periods array
   const durEntries = (raw.inauspicious_periods || [])
     .filter(t => t.name?.toLowerCase().includes('dur'));
   const durTime = durEntries.length > 0
     ? durEntries.map(d => fmtRange(d.start, d.end)).join(' · ')
-    : '--';
+    : 'Available with live API';
 
   // Varjyam — from inauspicious_periods array
   const varjEntry = (raw.inauspicious_periods || [])
     .find(t => t.name?.toLowerCase().includes('varj'));
   const varjyamTime = varjEntry
     ? fmtRange(varjEntry.start, varjEntry.end)
-    : '--';
+    : 'Available with live API';
 
   // ── RETURN UNIFIED DATA ─────────────────────────
   const result = {
