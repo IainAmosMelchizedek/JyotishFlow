@@ -4,6 +4,7 @@
    ============================================ */
 
 const API_BASE = "https://json.freeastrologyapi.com";
+const FREE_ASTRO_KEY = "trn153Ytis3DVR4eiuD7A1K61a2dKIBc3akeTqQU";
 
 // ── DELAY ───────────────────────────────────────
 const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -35,7 +36,7 @@ async function apiCall(endpoint, chart) {
       method:  "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key":    chart.apiKey
+        "x-api-key": FREE_ASTRO_KEY
       },
       body: buildBody(chart)
     });
