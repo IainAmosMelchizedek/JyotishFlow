@@ -338,7 +338,7 @@ header {
 
 .tl-item {
   display: grid;
-  grid-template-columns: 12px 1fr 1fr auto;
+  grid-template-columns: 12px 1fr 1fr 1fr;
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.2rem;
@@ -346,6 +346,21 @@ header {
   border: 1px solid transparent;
   background: var(--deep);
   transition: all 0.3s ease;
+}
+
+.tl-time {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.85rem;
+  color: var(--electric);
+  text-align: center;
+}
+
+.tl-desc {
+  font-size: 0.75rem;
+  color: var(--text);
+  text-align: right;
+  font-weight: 400;
+  opacity: 1 !important;
 }
 
 .tl-item:hover { transform: translateX(6px); }
@@ -395,6 +410,12 @@ header {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
   margin-bottom: 1rem;
+  justify-items: center;
+}
+
+.anchor-card {
+  width: 100%;
+  text-align: center;
 }
 
 .anchor-card {
@@ -484,16 +505,17 @@ footer {
 
 footer p {
   font-family: 'Cinzel Decorative', serif;
-  font-size: 0.8rem;
-  color: var(--gold-dim);
+  font-size: 1.1rem;
+  color: var(--gold);
   letter-spacing: 0.1em;
+  text-shadow: var(--glow-gold);
 }
 
 .footer-sub {
   font-family: 'Exo 2', sans-serif !important;
-  font-size: 0.65rem !important;
-  color: var(--text-dim) !important;
-  margin-top: 0.5rem;
+  font-size: 0.9rem !important;
+  color: var(--text) !important;
+  margin-top: 0.8rem;
   letter-spacing: 0.2em !important;
 }
 
