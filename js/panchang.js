@@ -1,9 +1,12 @@
 /* ============================================
-   JYOTISHFLOW — PANCHANG.JS — VEDIKA API v6
-   Using correct /api/v1/astrology/query endpoint
+   JYOTISHFLOW — PANCHANG.JS — VEDIKA API v7
+   Using correct individual structured endpoints
    ============================================ */
 
-const VEDIKA_URL = "https://corsproxy.io/?" + encodeURIComponent("https://api.vedika.io/api/v1/astrology/query");
+const USE_SANDBOX = false;
+const BASE = USE_SANDBOX
+  ? "https://corsproxy.io/?" + encodeURIComponent("https://api.vedika.io/sandbox")
+  : "https://corsproxy.io/?" + encodeURIComponent("https://api.vedika.io");
 
 // ── FORMAT TIME ─────────────────────────────────
 function fmt(val) {
@@ -18,112 +21,139 @@ function fmt(val) {
   }
 }
 
-// ── TIME RANGE FORMATTER ─────────────────────────
 function fmtRange(start, end) {
   if (!start || !end) return '--';
   return `${fmt(start)} — ${fmt(end)}`;
 }
 
-// ── MAIN LOAD FUNCTION ──────────────────────────
-async function loadPanchang(chart) {
-  console.log("🌊 JyotishFlow v6: Calling Vedika AI query endpoint...");
-
+// ── SINGLE ENDPOINT CALL ────────────────────────
+async function call(endpoint, chart) {
   const now     = new Date();
-  const dateStr = now.toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric',
-    month: 'long', day: 'numeric'
-  });
-  const timeStr = now.toLocaleTimeString('en-US', {
-    hour: '2-digit', minute: '2-digit'
-  });
+  const dateStr = now.toISOString().split('T')[0];
+  const lat     = chart.latitude;
+  const lon     = chart.longitude;
 
-  const question = `Today is ${dateStr} at ${timeStr} Eastern Time in Boston MA USA (latitude 42.3601, longitude -71.0589). Give me today's Panchang data for this location. Return ONLY a JSON object with no explanation, no markdown, no backticks. Use exactly this structure: {"tithi":{"name":"","end_time":""},"nakshatra":{"name":"","end_time":""},"yoga":{"name":"","end_time":""},"karana":{"name":"","end_time":""},"weekday":"","sunrise":"","sunset":"","rahukaal":{"start":"","end":""},"gulika":{"start":"","end":""},"yamagandam":{"start":"","end":""},"abhijit_muhurta":{"start":"","end":""},"amrit_kalam":{"start":"","end":""},"dur_muhurtam":[{"start":"","end":""}],"varjyam":{"start":"","end":""}}`;
+  const sandboxUrl = `https://api.vedika.io/sandbox${endpoint}?date=${dateStr}&lat=${lat}&lon=${lon}`;
+  const liveUrl    = `https://api.vedika.io${endpoint}?date=${dateStr}&lat=${lat}&lon=${lon}`;
 
-  let raw;
+  const targetUrl = USE_SANDBOX ? sandboxUrl : liveUrl;
+  const proxyUrl  = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+
   try {
-    const res = await fetch(VEDIKA_URL, {
-      method: "POST",
+    const res = await fetch(proxyUrl, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${chart.apiKey}`
-      },
-      body: JSON.stringify({
-        question: question,
-        birthDetails: {
-          datetime:  "1980-10-15T09:46:00",
-          latitude:  chart.latitude,
-          longitude: chart.longitude,
-          timezone:  "-05:00"
-        },
-        responseFormat: "json"
-      })
+        ...(USE_SANDBOX ? {} : { "Authorization": `Bearer ${chart.apiKey}` })
+      }
     });
 
     if (!res.ok) {
-      throw new Error(`Vedika API error: ${res.status}`);
+      console.warn(`❌ ${endpoint} failed: ${res.status}`);
+      return null;
     }
 
     const json = await res.json();
-    console.log("✅ Vedika raw response:", json);
-
-    // Parse the structured JSON response
-    let parsed;
-    if (json.structuredResponse) {
-      parsed = json.structuredResponse;
-    } else if (json.response) {
-      try {
-        const clean = json.response.replace(/```json|```/g, '').trim();
-        parsed = JSON.parse(clean);
-      } catch(e) {
-        console.warn("Could not parse response as JSON:", json.response);
-        parsed = {};
-      }
-    } else {
-      parsed = json.data || json;
-    }
-
-    console.log("✅ Parsed panchang:", parsed);
-    raw = parsed;
+    console.log(`✅ ${endpoint}:`, json.data);
+    return json.data || null;
 
   } catch(e) {
-    console.error("❌ Vedika API failed:", e.message);
-    throw e;
+    console.warn(`❌ ${endpoint} error:`, e.message);
+    return null;
   }
+}
 
-  // ── PARSE ALL DATA ──────────────────────────────
-  const tithiName   = raw.tithi?.name      || '--';
-  const tithiEnd    = fmt(raw.tithi?.end_time);
+// ── DELAY HELPER ────────────────────────────────
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+// ── MAIN LOAD FUNCTION ──────────────────────────
+async function loadPanchang(chart) {
+  console.log("🌊 JyotishFlow v7: Loading via Vedika structured endpoints...");
+  console.log("USE_SANDBOX:", USE_SANDBOX);
+
+  // Sequential calls with small delay
+  const tithiData    = await call("/astrology/tithi",          chart);
+  await delay(300);
+  const nakshatraData= await call("/astrology/nakshatra",      chart);
+  await delay(300);
+  const yogaData     = await call("/astrology/yoga",           chart);
+  await delay(300);
+  const karanaData   = await call("/astrology/karana",         chart);
+  await delay(300);
+  const panchaData   = await call("/panchang/today",           chart);
+  await delay(300);
+  const rahuData     = await call("/astrology/rahu-kaal",      chart);
+  await delay(300);
+  const gulikaData   = await call("/astrology/gulika-kaal",    chart);
+  await delay(300);
+  const yamaData     = await call("/astrology/yamaghanta",     chart);
+  await delay(300);
+  const abhijitData  = await call("/astrology/abhijit-muhurta",chart);
+  await delay(300);
+  const durData      = await call("/astrology/durmuhurta",     chart);
+  await delay(300);
+  const auspData     = await call("/astrology/auspicious-period", chart);
+
+  console.log("Raw panchang today:", panchaData);
+
+  // ── PARSE TITHI ──────────────────────────────
+  const tithiName   = tithiData?.tithi?.name    || panchaData?.tithi?.name    || '--';
+  const tithiEnd    = fmt(tithiData?.tithi?.end_time || panchaData?.tithi?.end_time);
   const tithiNumber = parseTithiNumber(tithiName);
 
-  const nakshatraName = raw.nakshatra?.name    || '--';
-  const nakshatraEnd  = fmt(raw.nakshatra?.end_time);
+  // ── PARSE NAKSHATRA ──────────────────────────
+  const nakshatraName = nakshatraData?.nakshatra?.name || panchaData?.nakshatra?.name || '--';
+  const nakshatraEnd  = fmt(nakshatraData?.nakshatra?.end_time || panchaData?.nakshatra?.end_time);
 
-  const yogaName = raw.yoga?.name    || '--';
-  const yogaEnd  = fmt(raw.yoga?.end_time);
+  // ── PARSE YOGA ───────────────────────────────
+  const yogaName = yogaData?.yoga?.name || panchaData?.yoga?.name || '--';
+  const yogaEnd  = fmt(yogaData?.yoga?.end_time || panchaData?.yoga?.end_time);
 
-  const karanaName = raw.karana?.name    || '--';
-  const karanaEnd  = fmt(raw.karana?.end_time);
+  // ── PARSE KARANA ─────────────────────────────
+  const karanaName = karanaData?.karana?.name || panchaData?.karana?.name || '--';
+  const karanaEnd  = fmt(karanaData?.karana?.end_time || panchaData?.karana?.end_time);
 
-  const weekday = raw.weekday
-    ? vedicToEnglishDay(raw.weekday)
-    : now.toLocaleDateString('en-US', { weekday: 'long' });
+  // ── PARSE WEEKDAY ────────────────────────────
+  const weekday = panchaData?.vara?.name
+    ? vedicToEnglishDay(panchaData.vara.name)
+    : new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
-  const sunrise = fmt(raw.sunrise);
-  const sunset  = fmt(raw.sunset);
+  // ── PARSE SUNRISE/SUNSET ─────────────────────
+  const sunrise = fmt(panchaData?.sunrise);
+  const sunset  = fmt(panchaData?.sunset);
 
-  const rahuTime    = fmtRange(raw.rahukaal?.start,       raw.rahukaal?.end);
-  const gulikaTime  = fmtRange(raw.gulika?.start,         raw.gulika?.end);
-  const yamaTime    = fmtRange(raw.yamagandam?.start,     raw.yamagandam?.end);
-  const abhijitTime = fmtRange(raw.abhijit_muhurta?.start,raw.abhijit_muhurta?.end);
-  const amritTime   = fmtRange(raw.amrit_kalam?.start,    raw.amrit_kalam?.end);
-  const varjyamTime = fmtRange(raw.varjyam?.start,        raw.varjyam?.end);
+  // ── PARSE TIME WINDOWS ────────────────────────
+  const rahuTime    = fmtRange(rahuData?.rahu_kaal?.start    || rahuData?.start,
+                               rahuData?.rahu_kaal?.end      || rahuData?.end);
+  const gulikaTime  = fmtRange(gulikaData?.gulika_kaal?.start || gulikaData?.start,
+                               gulikaData?.gulika_kaal?.end   || gulikaData?.end);
+  const yamaTime    = fmtRange(yamaData?.yamaghanta?.start   || yamaData?.start,
+                               yamaData?.yamaghanta?.end     || yamaData?.end);
+  const abhijitTime = fmtRange(abhijitData?.abhijit_muhurta?.start || abhijitData?.start,
+                               abhijitData?.abhijit_muhurta?.end   || abhijitData?.end);
 
+  // Amrit Kalam from auspicious periods
+  const amritEntry  = Array.isArray(auspData)
+    ? auspData.find(t => t.name?.toLowerCase().includes('amrit'))
+    : null;
+  const amritTime   = amritEntry
+    ? fmtRange(amritEntry.start, amritEntry.end)
+    : fmt(panchaData?.auspicious_timings?.find(t => t.name?.toLowerCase().includes('amrit'))?.start);
+
+  // Dur Muhurtam
   let durTime = '--';
-  if (Array.isArray(raw.dur_muhurtam) && raw.dur_muhurtam.length > 0) {
-    durTime = raw.dur_muhurtam.map(d => fmtRange(d.start, d.end)).join(' · ');
-  } else if (raw.dur_muhurtam?.start) {
-    durTime = fmtRange(raw.dur_muhurtam.start, raw.dur_muhurtam.end);
+  if (Array.isArray(durData)) {
+    durTime = durData.map(d => fmtRange(d.start, d.end)).join(' · ');
+  } else if (durData?.start) {
+    durTime = fmtRange(durData.start, durData.end);
   }
+
+  // Varjyam from panchang
+  const varjEntry   = (panchaData?.inauspicious_periods || [])
+    .find(t => t.name?.toLowerCase().includes('varj'));
+  const varjyamTime = varjEntry
+    ? fmtRange(varjEntry.start, varjEntry.end)
+    : '--';
 
   const result = {
     karanaName,    karanaEnd,
@@ -132,11 +162,11 @@ async function loadPanchang(chart) {
     nakshatraName, nakshatraEnd,
     weekday,       sunrise,     sunset,
     rahuTime,      gulikaTime,  yamaTime,
-    abhijitTime,   amritTime,
+    abhijitTime,   amritTime:   amritTime || '--',
     durTime,       varjyamTime
   };
 
-  console.log("🌊 JyotishFlow final data:", result);
+  console.log("🌊 JyotishFlow v7 final data:", result);
   return result;
 }
 
