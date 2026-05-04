@@ -1,189 +1,140 @@
 /* ============================================
-   JYOTISHFLOW — PANCHANG.JS — API ENGINE v3
-   Sequential calls to respect rate limit
+   JYOTISHFLOW — PANCHANG.JS — VEDIKA API v4
+   Single call. All data. Fast. Clean.
    ============================================ */
 
-const API_BASE = "https://json.freeastrologyapi.com";
+const VEDIKA_SANDBOX = "https://api.vedika.io/sandbox/panchang/today";
+const VEDIKA_LIVE    = "https://api.vedika.io/v2/astrology/panchang";
 
-// ── DELAY HELPER ────────────────────────────────
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-// ── BUILD REQUEST BODY ──────────────────────────
-function buildBody(chart) {
-  const now = new Date();
-  return {
-    year:      now.getFullYear(),
-    month:     now.getMonth() + 1,
-    date:      now.getDate(),
-    hours:     now.getHours(),
-    minutes:   now.getMinutes(),
-    seconds:   now.getSeconds(),
-    latitude:  chart.latitude,
-    longitude: chart.longitude,
-    timezone:  chart.timezone,
-    config: {
-      observation_point: "topocentric",
-      ayanamsha:         "lahiri"
-    }
-  };
-}
-
-// ── SINGLE API CALL ─────────────────────────────
-async function apiCall(endpoint, chart) {
-  try {
-    const res = await fetch(`${API_BASE}/${endpoint}`, {
-      method:  "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key":    chart.apiKey
-      },
-      body: JSON.stringify(buildBody(chart))
-    });
-    if (!res.ok) {
-      console.warn(`❌ ${endpoint} failed: ${res.status}`);
-      return null;
-    }
-    const data = await res.json();
-    console.log(`✅ ${endpoint}:`, data);
-    return data;
-  } catch (e) {
-    console.warn(`❌ ${endpoint} error:`, e.message);
-    return null;
-  }
-}
-
-// ── SEQUENTIAL API CALL WITH DELAY ──────────────
-async function apiCallSafe(endpoint, chart) {
-  await delay(1100); // 1.1 seconds between calls
-  return apiCall(endpoint, chart);
-}
-
-// ── FORMAT TIME HELPER ──────────────────────────
+// ── FORMAT TIME ─────────────────────────────────
 function fmt(val) {
   if (!val) return '--';
-  return String(val);
-}
-
-// ── SAFE GET NESTED VALUE ───────────────────────
-function dig(obj, ...keys) {
-  for (const k of keys) {
-    if (obj && obj[k] !== undefined && obj[k] !== null) return obj[k];
+  // Convert 24hr to 12hr format
+  try {
+    const [h, m] = val.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12  = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+  } catch(e) {
+    return val;
   }
-  return null;
 }
 
-// ── PARSE TIME RANGE ────────────────────────────
-function timeRange(obj) {
-  if (!obj) return '--';
-  const start = dig(obj, 'start', 'start_time', 'starting_time');
-  const end   = dig(obj, 'end',   'end_time',   'ending_time');
-  if (start && end) return `${fmt(start)} — ${fmt(end)}`;
-  if (start) return fmt(start);
-  return '--';
-}
-
-// ── PARSE ACTIVE ITEM FROM ARRAY ─────────────────
-function parseActive(data, nameKeys, timeKey) {
-  if (!data) return { name: '--', end: '--' };
-
-  const arr = Array.isArray(data) ? data : [data];
-  const now = new Date();
-
-  // Try to find currently active item
-  let active = arr.find(item => {
-    const endStr = dig(item, timeKey, 'end_time', 'upto', 'end');
-    if (!endStr) return false;
-    const endDate = new Date(`${now.toDateString()} ${endStr}`);
-    return !isNaN(endDate) && now < endDate;
-  });
-
-  // Fall back to first item
-  if (!active) active = arr[0];
-  if (!active) return { name: '--', end: '--' };
-
-  const name = dig(active, ...nameKeys) || '--';
-  const end  = fmt(dig(active, timeKey, 'end_time', 'upto', 'end'));
-
-  return { name, end };
+// ── TIME RANGE FORMATTER ─────────────────────────
+function fmtRange(start, end) {
+  if (!start || !end) return '--';
+  return `${fmt(start)} — ${fmt(end)}`;
 }
 
 // ── MAIN LOAD FUNCTION ──────────────────────────
 async function loadPanchang(chart) {
-  console.log("🌊 JyotishFlow: Loading cosmic data v3 (sequential)...");
+  console.log("🌊 JyotishFlow: Loading via Vedika single call...");
 
-  // Call sequentially with delay to respect 1 req/sec limit
-  const karanaData    = await apiCall("karana-durations",    chart);
-  const yogaData      = await apiCallSafe("yoga-durations",      chart);
-  const tithiData     = await apiCallSafe("tithi-durations",     chart);
-  const nakshatraData = await apiCallSafe("nakshatra-durations", chart);
-  const weekdayData   = await apiCallSafe("vedicweekday",        chart);
-  const sunData       = await apiCallSafe("getsunriseandset",    chart);
-  const rahuData      = await apiCallSafe("rahu-kalam",          chart);
-  const gulikaData    = await apiCallSafe("gulika-kalam",        chart);
-  const yamaData      = await apiCallSafe("yama-gandam",         chart);
-  const abhijitData   = await apiCallSafe("abhijit-muhurat",     chart);
-  const amritData     = await apiCallSafe("amrit-kaal",          chart);
-  const durData       = await apiCallSafe("dur-muhurat",         chart);
-  const varjyamData   = await apiCallSafe("varjyam",             chart);
+  // Use sandbox for now — swap to VEDIKA_LIVE when subscribed
+  const useSandbox = true;
+  const url = useSandbox ? VEDIKA_SANDBOX : VEDIKA_LIVE;
 
-  // ── PARSE KARANA ─────────────────────────────
-  const karana = parseActive(karanaData,
-    ['name', 'karana_name'], 'end_time');
+  let raw;
+  try {
+    const res = await fetch(url, {
+      method: useSandbox ? "GET" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(useSandbox ? {} : { "Authorization": `Bearer ${chart.apiKey}` })
+      },
+      ...(useSandbox ? {} : {
+        body: JSON.stringify({
+          date:      new Date().toISOString().split('T')[0],
+          latitude:  chart.latitude,
+          longitude: chart.longitude,
+          timezone:  "America/New_York"
+        })
+      })
+    });
 
-  // ── PARSE YOGA ───────────────────────────────
-  const yoga = parseActive(yogaData,
-    ['name', 'yoga_name'], 'end_time');
+    if (!res.ok) {
+      throw new Error(`Vedika API error: ${res.status}`);
+    }
 
-  // ── PARSE TITHI ──────────────────────────────
-  const tithiArr = Array.isArray(tithiData) ? tithiData : [tithiData];
-  const tithiItem = tithiArr[0] || {};
-  const tithiName   = dig(tithiItem, 'name', 'tithi_name') || '--';
-  const tithiEnd    = fmt(dig(tithiItem, 'end_time', 'upto'));
-  const tithiNumber = dig(tithiItem, 'number', 'tithi_number') || 0;
+    const json = await res.json();
+    console.log("✅ Vedika raw response:", json);
+    raw = json.data || json;
 
-  // ── PARSE NAKSHATRA ──────────────────────────
-  const nakshatra = parseActive(nakshatraData,
-    ['name', 'nakshatra_name'], 'end_time');
-
-  // ── PARSE WEEKDAY ────────────────────────────
-  let weekday = '--';
-  if (weekdayData) {
-    weekday = dig(weekdayData,
-      'weekday_name', 'name', 'day', 'vedic_weekday_name') || '--';
+  } catch(e) {
+    console.error("❌ Vedika API failed:", e.message);
+    throw e;
   }
 
-  // ── PARSE SUNRISE/SUNSET ─────────────────────
-  let sunrise = '--';
-  let sunset  = '--';
-  if (sunData) {
-    sunrise = fmt(dig(sunData, 'sunrise', 'sun_rise'));
-    sunset  = fmt(dig(sunData, 'sunset',  'sun_set'));
-  }
+  // ── PARSE ALL DATA FROM SINGLE RESPONSE ────────
 
-  // ── PARSE TIME WINDOWS ────────────────────────
-  const rahuTime    = timeRange(rahuData);
-  const gulikaTime  = timeRange(gulikaData);
-  const yamaTime    = timeRange(yamaData);
-  const abhijitTime = timeRange(abhijitData);
-  const amritTime   = timeRange(amritData);
-  const varjyamTime = timeRange(varjyamData);
+  // Tithi
+  const tithiName   = raw.tithi?.name   || '--';
+  const tithiEnd    = fmt(raw.tithi?.end_time);
+  const tithiNumber = parseTithiNumber(tithiName);
 
-  let durTime = '--';
-  if (Array.isArray(durData) && durData.length > 0) {
-    durTime = durData.map(d => timeRange(d)).join(' · ');
-  } else if (durData) {
-    durTime = timeRange(durData);
-  }
+  // Nakshatra
+  const nakshatraName = raw.nakshatra?.name     || '--';
+  const nakshatraEnd  = fmt(raw.nakshatra?.end_time);
 
-  // ── RETURN UNIFIED DATA ───────────────────────
+  // Yoga
+  const yogaName = raw.yoga?.name     || '--';
+  const yogaEnd  = fmt(raw.yoga?.end_time);
+
+  // Karana
+  const karanaName = raw.karana?.name     || '--';
+  const karanaEnd  = fmt(raw.karana?.end_time);
+
+  // Weekday
+  const weekday = raw.vara?.name
+    ? vedicToEnglishDay(raw.vara.name)
+    : new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+  // Sunrise / Sunset
+  const sunrise = fmt(raw.sunrise);
+  const sunset  = fmt(raw.sunset);
+
+  // Rahu Kaal
+  const rahuTime = fmtRange(raw.rahukaal?.start, raw.rahukaal?.end);
+
+  // Gulika
+  const gulikaTime = fmtRange(raw.gulika?.start, raw.gulika?.end);
+
+  // Yamaganda
+  const yamaTime = fmtRange(raw.yamagandam?.start, raw.yamagandam?.end);
+
+  // Abhijit Muhurta
+  const abhijitTime = fmtRange(
+    raw.abhijit_muhurta?.start,
+    raw.abhijit_muhurta?.end
+  );
+
+  // Amrit Kalam — from auspicious_timings array
+  const amritEntry = (raw.auspicious_timings || [])
+    .find(t => t.name?.toLowerCase().includes('amrit'));
+  const amritTime = amritEntry
+    ? fmtRange(amritEntry.start, amritEntry.end)
+    : '--';
+
+  // Dur Muhurtam — from inauspicious_periods array
+  const durEntries = (raw.inauspicious_periods || [])
+    .filter(t => t.name?.toLowerCase().includes('dur'));
+  const durTime = durEntries.length > 0
+    ? durEntries.map(d => fmtRange(d.start, d.end)).join(' · ')
+    : '--';
+
+  // Varjyam — from inauspicious_periods array
+  const varjEntry = (raw.inauspicious_periods || [])
+    .find(t => t.name?.toLowerCase().includes('varj'));
+  const varjyamTime = varjEntry
+    ? fmtRange(varjEntry.start, varjEntry.end)
+    : '--';
+
+  // ── RETURN UNIFIED DATA ─────────────────────────
   const result = {
-    karanaName:    karana.name,
-    karanaEnd:     karana.end,
-    yogaName:      yoga.name,
-    yogaEnd:       yoga.end,
-    tithiName,     tithiEnd,   tithiNumber,
-    nakshatraName: nakshatra.name,
-    nakshatraEnd:  nakshatra.end,
+    karanaName,    karanaEnd,
+    yogaName,      yogaEnd,
+    tithiName,     tithiEnd,    tithiNumber,
+    nakshatraName, nakshatraEnd,
     weekday,
     sunrise,       sunset,
     rahuTime,      gulikaTime,  yamaTime,
@@ -193,4 +144,34 @@ async function loadPanchang(chart) {
 
   console.log("🌊 JyotishFlow final data:", result);
   return result;
+}
+
+// ── TITHI NUMBER PARSER ──────────────────────────
+function parseTithiNumber(name) {
+  const tithiMap = {
+    'Pratipada': 1,  'Dwitiya': 2,   'Tritiya': 3,
+    'Chaturthi': 4,  'Panchami': 5,  'Shashthi': 6,
+    'Saptami': 7,    'Ashtami': 8,   'Navami': 9,
+    'Dashami': 10,   'Ekadashi': 11, 'Dwadashi': 12,
+    'Trayodashi': 13,'Chaturdashi': 14,'Purnima': 15,
+    'Amavasya': 30
+  };
+  for (const [key, val] of Object.entries(tithiMap)) {
+    if (name?.includes(key)) return val;
+  }
+  return 0;
+}
+
+// ── VEDIC DAY NAME CONVERTER ─────────────────────
+function vedicToEnglishDay(vedicName) {
+  const map = {
+    'Ravivara':  'Sunday',
+    'Somavara':  'Monday',
+    'Mangalvara':'Tuesday',
+    'Budhvara':  'Wednesday',
+    'Guruvara':  'Thursday',
+    'Shukravara':'Friday',
+    'Shanivara': 'Saturday'
+  };
+  return map[vedicName] || vedicName;
 }
