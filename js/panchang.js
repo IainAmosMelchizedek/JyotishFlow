@@ -32,7 +32,12 @@ async function loadPanchang(chart) {
 
   // Use sandbox for now — swap to VEDIKA_LIVE when subscribed
  const useSandbox = false;
-  const url = useSandbox ? VEDIKA_SANDBOX : VEDIKA_LIVE;
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+
+  const liveUrl = `https://corsproxy.io/?${encodeURIComponent(VEDIKA_LIVE)}`;
+  const sandboxUrl = `https://corsproxy.io/?${encodeURIComponent(VEDIKA_SANDBOX)}`;
+  const url = useSandbox ? sandboxUrl : liveUrl;
 
   let raw;
   try {
@@ -44,7 +49,7 @@ async function loadPanchang(chart) {
       },
       ...(useSandbox ? {} : {
         body: JSON.stringify({
-          date:      new Date().toISOString().split('T')[0],
+          date:      dateStr,
           latitude:  chart.latitude,
           longitude: chart.longitude,
           timezone:  "America/New_York"
