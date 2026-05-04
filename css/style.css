@@ -328,7 +328,7 @@ header {
 /* CARD FLIP ON HOVER */
 .card {
   position: relative;
-  min-height: 160px;
+  min-height: 220px;
   perspective: 1000px;
 }
 
@@ -386,9 +386,16 @@ header {
 
 .card-back-warning {
   margin-top: 0.8rem;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--red-bad);
   font-weight: 600;
+  line-height: 1.5;
+}
+
+.card-back-body {
+  font-size: 0.75rem;
+  color: var(--text);
+  line-height: 1.6;
 }
 
 .card-back-good {
