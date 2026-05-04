@@ -3,7 +3,7 @@
    Single call. All data. Fast. Clean.
    ============================================ */
 
-const VEDIKA_SANDBOX = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://api.vedika.io/sandbox/panchang/today");
+const VEDIKA_SANDBOX = "https://corsproxy.io/?" + encodeURIComponent("https://api.vedika.io/sandbox/panchang/today");
 const VEDIKA_LIVE    = "https://api.vedika.io/v2/astrology/panchang";
 
 // ── FORMAT TIME ─────────────────────────────────
@@ -59,10 +59,7 @@ async function loadPanchang(chart) {
     const json = await res.json();
     console.log("✅ Vedika raw response:", json);
     // allorigins wraps the response in a contents string
-    const parsed = typeof json.contents === 'string'
-      ? JSON.parse(json.contents)
-      : json;
-    raw = parsed.data || parsed;
+   raw = json.data || json;
 
   } catch(e) {
     console.error("❌ Vedika API failed:", e.message);
